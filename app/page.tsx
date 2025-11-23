@@ -16,9 +16,8 @@ export default function HomePage() {
   const [code, setCode] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [deleting, setDeleting] = useState<Record<string, boolean>>({}); // per-code loading
+  const [deleting, setDeleting] = useState<Record<string, boolean>>({});
 
-  // Fetch all links on load
   async function fetchLinks() {
     try {
       const res = await fetch("/api/links");
@@ -38,7 +37,6 @@ export default function HomePage() {
     fetchLinks();
   }, []);
 
-  // Create link with user code
   async function createLink(e: any) {
     e.preventDefault();
     setError("");
@@ -63,10 +61,9 @@ export default function HomePage() {
         return;
       }
 
-      // success
       setUrl("");
       setCode("");
-      // reload list (could also push newly created item to state)
+
       await fetchLinks();
     } catch (err: any) {
       console.error("Create failed:", err);
@@ -76,14 +73,12 @@ export default function HomePage() {
     }
   }
 
-  // Delete link (improved)
   async function deleteLink(codeToDelete: string) {
     const confirmDelete = confirm(
       `Delete short link "${codeToDelete}"? This action cannot be undone.`
     );
     if (!confirmDelete) return;
 
-    // set per-item loading
     setDeleting((d) => ({ ...d, [codeToDelete]: true }));
     setError("");
 
@@ -93,7 +88,6 @@ export default function HomePage() {
       });
 
       if (!res.ok) {
-        // try to read JSON error
         const body = await res.text();
         console.error("Delete failed:", res.status, body);
         setError(
@@ -102,7 +96,6 @@ export default function HomePage() {
         return;
       }
 
-      // Optimistic update: remove the deleted item from the list
       setLinks((prev) => prev.filter((l) => l.code !== codeToDelete));
     } catch (err: any) {
       console.error("Delete request failed:", err);
@@ -116,7 +109,6 @@ export default function HomePage() {
     }
   }
 
-  // Copy full short URL
   const copyUrl = (code: string) => {
     const fullUrl = `${window.location.origin}/${code}`;
     navigator.clipboard.writeText(fullUrl);
@@ -203,26 +195,39 @@ export default function HomePage() {
                     : "—"}
                 </td>
 
+                {/* Actions */}
                 <td className="p-2 align-top flex gap-2">
+
+                  {/* Copy Button */}
                   <button
                     onClick={() => copyUrl(link.code)}
-                    className="px-2 py-1 bg-gray-200 rounded"
+                    className="px-3 py-1.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition shadow-sm"
                   >
                     Copy
                   </button>
 
+                  {/* Stats Page */}
+                  <a
+                    href={`/code/${link.code}`}
+                    className="px-3 py-1.5 bg-green-600 text-white rounded-lg hover:bg-green-700 transition shadow-sm"
+                  >
+                    Stats
+                  </a>
+
+                  {/* Delete Button */}
                   <button
                     onClick={() => deleteLink(link.code)}
                     disabled={!!deleting[link.code]}
-                    className={`px-2 py-1 rounded ${
+                    className={`px-3 py-1.5 rounded-lg transition shadow-sm ${
                       deleting[link.code]
                         ? "bg-gray-300 text-gray-600 cursor-not-allowed"
-                        : "bg-red-500 text-white"
+                        : "bg-red-600 text-white hover:bg-red-700"
                     }`}
                   >
                     {deleting[link.code] ? "Deleting..." : "Delete"}
                   </button>
                 </td>
+
               </tr>
             ))}
           </tbody>
@@ -231,4 +236,3 @@ export default function HomePage() {
     </main>
   );
 }
- 
